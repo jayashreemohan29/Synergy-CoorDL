@@ -42,6 +42,14 @@ class DummyLoader : public Loader<CPUBackend, Tensor<CPUBackend>> {
     t.set_type(TypeInfo::Create<uint8_t>());
   }
 
+  std::vector<std::pair<string, int>> GetIndexList() override {
+    std::vector<std::pair<string, int>> vect;
+    string none("NONE");
+    vect.push_back(std::make_pair(none, -1));
+    return vect;  
+  }
+
+
   void PrepareMetadataImpl() override {
     if (dummyfile_ != "") {
       std::ifstream f(dummyfile_);
@@ -253,6 +261,12 @@ class TestLoader : public Loader<CPUBackend, Tensor<CPUBackend>> {
     Loader<CPUBackend, Tensor<CPUBackend>>(spec), current_index_(0) {}
 
   void ReadSample(Tensor<CPUBackend> &t) override {}
+  std::vector<std::pair<string, int>> GetIndexList() override {
+    std::vector<std::pair<string, int>> vect;
+    string none("NONE");
+    vect.push_back(std::make_pair(none, -1));
+    return vect;  
+  }
 
   Index SizeImpl() override {
     return internal_size_;

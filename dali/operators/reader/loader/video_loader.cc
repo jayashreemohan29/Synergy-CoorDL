@@ -701,6 +701,13 @@ void VideoLoader::PrepareEmpty(SequenceWrapper &tensor) {
   tensor.sequence.Resize({tensor_init_bytes_});
 }
 
+std::vector<std::pair<string, int>> VideoLoader::GetIndexList(){
+  std::vector<std::pair<string, int>> vect;
+  string none("NONE");
+  vect.push_back(std::make_pair(none, -1));
+  return vect;
+}
+
 void VideoLoader::ReadSample(SequenceWrapper& tensor) {
     // TODO(spanev) remove the async between the 2 following methods?
     auto& seq_meta = frame_starts_[current_frame_idx_];

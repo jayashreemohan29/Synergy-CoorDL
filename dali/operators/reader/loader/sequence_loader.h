@@ -97,6 +97,7 @@ class SequenceLoader : public Loader<CPUBackend, TensorSequence> {
 
   void PrepareEmpty(TensorSequence &tensor) override;
   void ReadSample(TensorSequence &tensor) override;
+  std::vector<std::pair<string, int>> GetIndexList() override;
 
  protected:
   Index SizeImpl() override;

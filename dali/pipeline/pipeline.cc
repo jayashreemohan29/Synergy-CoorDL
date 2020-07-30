@@ -743,6 +743,7 @@ OpNode * Pipeline::GetOperatorNode(const std::string& name) {
 }
 
 std::map<std::string, Index> Pipeline::EpochSize() {
+  std::cout << "CALLED FROM PIPELINE EPOCHSIZE" << std::endl;
   std::map<std::string, Index> ret;
   for (Index i = 0; i < graph_.NumOp(OpType::CPU); ++i) {
     const OpNode &current = graph_.Node(OpType::CPU, i);
@@ -758,6 +759,15 @@ std::map<std::string, Index> Pipeline::EpochSize() {
       ret.insert(make_pair(current.instance_name, epoch_size));
     }
   }
+  return ret;
+}
+
+
+std::vector<std::pair<string, int>> Pipeline::IndexList(const std::string& name) {
+  std::cout << "CALLED FROM PIPELINE INDEXLIST for " << name << std::endl;
+  const OpNode &current = graph_.Node(name);
+  std::vector<std::pair<string, int>> ret;
+  ret = current.op->index_list();
   return ret;
 }
 

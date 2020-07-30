@@ -36,6 +36,13 @@ class IndexedFileLoader : public Loader<CPUBackend, Tensor<CPUBackend>> {
       current_index_(0), current_file_index_(0), current_file_(nullptr) {
     }
 
+  std::vector<std::pair<string, int>> GetIndexList() override {
+    std::vector<std::pair<string, int>> vect;
+    string none("NONE");
+    vect.push_back(std::make_pair(none, -1));
+    return vect;
+  }
+
   void ReadSample(Tensor<CPUBackend>& tensor) override {
     MoveToNextShard(current_index_);
 

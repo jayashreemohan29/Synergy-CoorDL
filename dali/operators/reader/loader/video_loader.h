@@ -199,6 +199,7 @@ class VideoLoader : public Loader<GPUBackend, SequenceWrapper> {
 
   void PrepareEmpty(SequenceWrapper &tensor) override;
   void ReadSample(SequenceWrapper &tensor) override;
+  std::vector<std::pair<string, int>> GetIndexList() override;
 
   VideoFile& get_or_open_file(const std::string &filename);
   void seek(VideoFile& file, int frame);

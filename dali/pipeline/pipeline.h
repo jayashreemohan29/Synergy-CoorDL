@@ -354,6 +354,13 @@ class DLL_PUBLIC Pipeline {
    */
   DLL_PUBLIC std::map<std::string, Index> EpochSize();
 
+  
+  /**
+   * @brief Returns the vector of (file name, label)
+   * in the shuffle order currently processed
+   */
+  DLL_PUBLIC std::vector<std::pair<string, int>> IndexList(const std::string& name);
+
   /**
    * @brief Returns the number of threads used by the pipeline.
    */

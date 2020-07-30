@@ -132,7 +132,8 @@ void FileLoader::ReadSample(ImageLabelWrapper &image_label) {
   auto image_pair = image_label_pairs_[current_index_++];
   //auto image_pair = std::make_pair(std::get<0>(image_tuple), std::get<1>(image_tuple));
   int cur_idx = current_index_ - 1;
-  //outfile << "Reading Current index = " << cur_idx << ", img = " << image_pair.first << std::endl;
+  if (debug_)
+    outfile_index  << cur_idx << ", " << image_pair.first << std::endl;
 
   // handle wrap-around
   MoveToNextShard(current_index_);

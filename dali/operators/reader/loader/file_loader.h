@@ -124,6 +124,20 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
         DALI_ENFORCE(
           !shuffle_after_epoch_ || !shuffle_,
           "shuffle_after_epoch and random_shuffle cannot be both true");
+      if (resume_index_ > 0){
+        DALI_ENFORCE(shuffle_after_epoch_, 
+          "Shuffle must be set to resume loader from a fixed index");
+      }
+
+      if (!resume_index_ && !resume_epoch_){
+        must_resume_chk_ = false;
+      }
+      else{
+        DALI_ENFORCE(resume_epoch_ >= 0 , 
+          "Epoch must be set to resume loader from a fixed index");
+        must_resume_chk_ = true;
+      }
+
       /*
        * Imply `stick_to_shard` from  `shuffle_after_epoch`
        */
@@ -137,6 +151,10 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
 
   void PrepareEmpty(ImageLabelWrapper &tensor) override;
   void ReadSample(ImageLabelWrapper &tensor) override;
+
+  std::vector<std::pair<string, int>> GetIndexList() override {
+    return image_label_pairs_;
+  }
   
   ~FileLoader() {
      if (dist_mint){
@@ -199,10 +217,8 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
 
     //if (current_epoch_ == 0)
     //  image_label_pairs_orig_ = image_label_pairs_;
-
+    image_label_pairs_orig_ = image_label_pairs_;
     Reset(true);
-    //for (int i = 0; i < static_cast<int>(image_label_pairs_.size()); i++)
-    //    outfile << i << " : " << std::get<0>(image_label_pairs_[i]) << ", " << std::get<1>(image_label_pairs_[i]) << std::endl;
   }
 
   /* This function is called before the use of FileLoader iter
@@ -215,18 +231,31 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
       current_index_ = start_index(shard_id_, num_shards_, Size());
       index_start_ = current_index_;
       index_end_ = current_index_ + Size()/num_shards_;
-      //outfile << __FILE__ << " Reset : wrap to shard" << endl;
     } else {
       current_index_ = 0;
       index_start_ = current_index_;
       index_end_ = current_index_ + Size()/num_shards_;
     }
+
+      // Check if the index is within the shard
+      if (must_resume_chk_){
+        current_index_ = current_index_ + resume_index_;
+        DALI_ENFORCE(current_index_ <= index_end_, "Resume index cannot be larger than shard size");
+        current_epoch_ = resume_epoch_;
+        if (debug_)
+            outfile << "Resuming at index " << current_index_ << " and epoch " << current_epoch_ << std::endl;
+      }
+
       outfile << "Current Epoch : " << current_epoch_ << endl;
       outfile << "Cache size : " << cache_size_  << "\nCached : " << caching_done_ << endl;
       outfile << "Current index : " << current_index_ << "\nindex_start : " << index_start_ << "\nindex_end : " << index_end_ << endl;
 
     if (shuffle_after_epoch_) {
+      if (debug_)
+        outfile << "Shuffling with seed = " << shuffle_seed_ << " + " << current_epoch_ << std::endl;
+      
       std::mt19937 g(kDaliDataloaderSeed + shuffle_seed_ + current_epoch_);
+      image_label_pairs_ = image_label_pairs_orig_;
       std::shuffle(image_label_pairs_.begin(), image_label_pairs_.end(), g);
     }
     // If the epoch count is 1 here, it means we have completed
@@ -335,6 +364,16 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
        
 
     current_epoch_++;
+    /*
+    if (debug_){
+      outfile << "Epoch = " << current_epoch_ << std::endl;
+      for (int i = 0; i < static_cast<int>(image_label_pairs_.size()); i++)
+        outfile << i << " : " << image_label_pairs_[i].first << " : " << image_label_pairs_[i].second << std::endl;
+      outfile << "Current index = " << current_index_ << std::endl;
+      outfile << "Start index = " << index_start_ << std::endl;
+    }*/
+    // We want subsequent epochs to explore full dataset
+    must_resume_chk_ = false;
 
     if (resume_)
         caching_done_ = true;
@@ -342,15 +381,19 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
   }
 
   using Loader<CPUBackend, ImageLabelWrapper>::shard_id_;
+  using Loader<CPUBackend, ImageLabelWrapper>::resume_index_;
+  using Loader<CPUBackend, ImageLabelWrapper>::resume_epoch_;
   using Loader<CPUBackend, ImageLabelWrapper>::shuffle_seed_;
   using Loader<CPUBackend, ImageLabelWrapper>::cache_size_orig_;
   using Loader<CPUBackend, ImageLabelWrapper>::num_shards_;
   using Loader<CPUBackend, ImageLabelWrapper>::num_nodes_;
   using Loader<CPUBackend, ImageLabelWrapper>::node_id_;
   using Loader<CPUBackend, ImageLabelWrapper>::resume_;
+  using Loader<CPUBackend, ImageLabelWrapper>::debug_;
   //using Loader<CPUBackend, ImageLabelWrapper>::node_port_list_;
   using Loader<CPUBackend, ImageLabelWrapper>::seed_;
   using Loader<CPUBackend, ImageLabelWrapper>::outfile;
+  using Loader<CPUBackend, ImageLabelWrapper>::outfile_index;
   using Loader<CPUBackend, ImageLabelWrapper>::num_shards_per_node_;
 
   string file_root_, file_list_, node_ip_;
@@ -362,11 +405,12 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
   int cache_size_ = 0;
   //A map of file paths, label and a bool that indicates whether cached
   vector<std::pair<string, int>> image_label_pairs_;
-//  vector<std::pair<string, int>> image_label_pairs_orig_;
+  vector<std::pair<string, int>> image_label_pairs_orig_;
   bool shuffle_after_epoch_;
   Index current_index_;
   int current_epoch_;
   bool caching_done_;
+  bool must_resume_chk_;
   int index_start_;
   int index_end_;
   bool dist_mint = false;

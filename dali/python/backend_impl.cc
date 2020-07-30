@@ -899,6 +899,11 @@ PYBIND11_MODULE(backend_impl, m) {
           DALI_ENFORCE(sizes.find(op_name) != sizes.end(),
               "Operator " + op_name + " does not expose valid epoch size.");
           return sizes[op_name];
+        })
+    .def("index_list",
+        [](Pipeline* p, const std::string& op_name) {
+          std::vector<std::pair<std::string, int>> list = p->IndexList(op_name);
+          return list;
         });
 
 #define DALI_OPSPEC_ADDARG(T) \

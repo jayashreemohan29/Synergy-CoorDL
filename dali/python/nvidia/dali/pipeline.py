@@ -171,6 +171,21 @@ class Pipeline(object):
             return self._pipe.epoch_size(name)
         return self._pipe.epoch_size()
 
+    def index_list(self, name = None):
+        """Current order of data items processed by the pipeline
+           Returns a list of <index, file name> pairs in the same
+             order as the FileReader is processing it.
+           If name is not specified, returns -1
+        """
+        if not self._built:
+            raise RuntimeError("Pipeline must be built first.")
+        if name is not None:
+            return self._pipe.index_list(name)
+        return -1
+
+
+
+
     @staticmethod
     def current(raise_error_if_none = True):
         pipeline = getattr(pipeline_tls, 'current_pipeline', None)

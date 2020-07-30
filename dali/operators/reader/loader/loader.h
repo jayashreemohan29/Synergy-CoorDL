@@ -78,10 +78,13 @@ class Loader {
       cache_size_orig_(options.GetArgument<int>("cache_size")),
       shuffle_seed_(options.GetArgument<int>("shuffle_seed")),
       shard_id_(options.GetArgument<int>("shard_id")),
+      resume_index_(options.GetArgument<int>("resume_index")),
+      resume_epoch_(options.GetArgument<int>("resume_epoch")),
       num_shards_(options.GetArgument<int>("num_shards")),
       num_nodes_(options.GetArgument<int>("num_nodes")),
       node_id_(options.GetArgument<int>("node_id")),
       resume_(options.GetArgument<bool>("resume")),
+      debug_(options.GetArgument<bool>("debug")),
       //node_port_list_(options.GetRepeatedArgument<int>("node_port_list")),
       copy_read_data_(false),
       read_ahead_(options.GetArgument<bool>("read_ahead")),
@@ -94,11 +97,14 @@ class Loader {
       returned_sample_counter_(0),
       pad_last_batch_(options.GetArgument<bool>("pad_last_batch")) {
     DALI_ENFORCE(initial_empty_size_ > 0, "Batch size needs to be greater than 0");
+    DALI_ENFORCE(resume_index_ >= 0, "Index to resume loading must be greater than/ equal to 0");
     DALI_ENFORCE(num_shards_ > shard_id_, "num_shards needs to be greater than shard_id");
     // initialize a random distribution -- this will be
     // used to pick from our sample buffer
     string ofname = to_string(shard_id_) + "-" + to_string(cache_size_orig_) + ".log";
+    string ofname_index = to_string(shard_id_) + "-" + to_string(cache_size_orig_) + "-index.log";
     outfile.open(ofname);
+    outfile_index.open(ofname_index);
     std::seed_seq seq({seed_});
     e_ = std::default_random_engine(seq);
     virtual_shard_id_ = shard_id_;
@@ -106,6 +112,7 @@ class Loader {
 
   virtual ~Loader() {
     outfile.close();
+    outfile_index.close();
     sample_buffer_.clear();
     empty_tensors_.clear();
   }
@@ -200,7 +207,7 @@ class Loader {
 
     int offset = shuffle_ ? dis(e_) : 0;
     Index idx = (shards_.front().start + offset) % sample_buffer_.size();
-    //outfile << __FILE__ << " : IDX from buffer : " << idx << std::endl;
+    //outfile << ": IDX from buffer : " << idx << " shard_front = " << shards_.front().start  << " size = " << sample_buffer_.size() << std::endl;
     LoadTargetSharedPtr sample_ptr(sample_buffer_[idx].release(),
       [this](LoadTarget* sample) {
         LoadTargetUniquePtr recycle_ptr(sample);
@@ -243,6 +250,7 @@ class Loader {
   // used to populate the sample buffer for "shuffled"
   // reads.
   virtual void ReadSample(LoadTarget& tensor) = 0;
+  virtual std::vector<std::pair<string, int>> GetIndexList() = 0;
 
   void PrepareMetadata() {
     std::lock_guard<std::mutex> l(prepare_metadata_mutex_);
@@ -271,6 +279,14 @@ class Loader {
       return SizeImpl();
     }
   }
+
+  /*std::vector<std::pair<string, int>> GetIndexList(){
+    std::cout << "From loader" << std::endl;
+    std::vector<std::pair<string, int>> vect;
+    string none("NONE");
+    vect.push_back(std::make_pair(none, -1));
+    return vect;
+  }*/
 
  protected:
   virtual Index SizeImpl() = 0;
@@ -345,6 +361,7 @@ class Loader {
 
   //output file
   std::ofstream outfile;
+  std::ofstream outfile_index;
   string outfile_name;
 
   // rng
@@ -362,10 +379,13 @@ class Loader {
 
   // sharding
   const int shard_id_;
+  const int resume_index_;
+  const int resume_epoch_;
   const int num_shards_;
   const int num_nodes_;
   const int node_id_;
   const bool resume_;
+  const bool debug_;
   //vector<int> node_port_list_;
   std::mutex net_mutex_;
 

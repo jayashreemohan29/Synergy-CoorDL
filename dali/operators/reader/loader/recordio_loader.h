@@ -74,6 +74,13 @@ class RecordIOLoader : public IndexedFileLoader {
     index_file.close();
   }
 
+  std::vector<std::pair<string, int>> GetIndexList() override {
+    std::vector<std::pair<string, int>> vect;
+    string none("NONE");
+    vect.push_back(std::make_pair(none, -1));
+    return vect;
+  }
+
   void ReadSample(Tensor<CPUBackend>& tensor) override {
     // if we moved to next shard wrap up
     MoveToNextShard(current_index_);

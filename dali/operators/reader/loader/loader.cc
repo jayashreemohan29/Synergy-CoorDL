@@ -32,8 +32,14 @@ this parameter is ignored.)code", 1024)
       R"code(ID of the node in multi GPU training).)code", 0)
   .AddOptionalArg("resume",
       R"code(Resume with old cache.)code", false)
+  .AddOptionalArg("debug",
+      R"code(Print debug stmts)code", false)
   .AddOptionalArg("shard_id",
       R"code(Id of the part to read.)code", 0)
+  .AddOptionalArg("resume_index",
+      R"code(Index to resume loader from.)code", 0)
+  .AddOptionalArg("resume_epoch",
+      R"code(Epoch to resume loader from.)code", 0)
   .AddOptionalArg("cache_size",
       R"code(Number of items to cache for this loader.)code", 0)
   .AddOptionalArg("shuffle_seed",

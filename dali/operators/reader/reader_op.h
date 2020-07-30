@@ -166,6 +166,10 @@ class DataReader : public Operator<Backend> {
     return loader_->SizePadded();
   }
 
+  std::vector<std::pair<string, int>> index_list() const override {
+    return loader_->GetIndexList();
+  }
+
   LoadTarget& GetSample(int sample_idx) {
     return *prefetched_batch_queue_[curr_batch_consumer_][sample_idx];
   }

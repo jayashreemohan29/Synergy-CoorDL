@@ -163,7 +163,14 @@ class LMDBLoader : public Loader<CPUBackend, Tensor<CPUBackend>> {
     file_index = find_lower_bound(offsets_, index);
     local_index = index - offsets_[file_index];
   }
-
+ 
+  std::vector<std::pair<string, int>> GetIndexList() override {
+    std::vector<std::pair<string, int>> vect;
+    string none("NONE");
+    vect.push_back(std::make_pair(none, -1));
+    return vect;
+  }
+ 
   void ReadSample(Tensor<CPUBackend>& tensor) override {
     // assume cursor is valid, read next, loop to start if necessary
 

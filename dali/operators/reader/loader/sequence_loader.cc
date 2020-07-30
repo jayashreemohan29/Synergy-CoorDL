@@ -99,6 +99,13 @@ void SequenceLoader::PrepareEmpty(TensorSequence &sequence) {
   }
 }
 
+std::vector<std::pair<string, int>> SequenceLoader::GetIndexList() {
+  std::vector<std::pair<string, int>> vect;
+  string none("NONE");
+  vect.push_back(std::make_pair(none, -1));
+  return vect;
+}
+
 void SequenceLoader::ReadSample(TensorSequence &sequence) {
   // TODO(klecki) this is written as a prototype for video handling
   const auto &sequence_paths = sequences_[current_sequence_];

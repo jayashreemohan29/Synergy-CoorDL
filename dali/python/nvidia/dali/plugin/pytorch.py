@@ -124,7 +124,8 @@ class DALIGenericIterator(object):
                  auto_reset=False,
                  fill_last_batch=True,
                  dynamic_shape=False,
-                 last_batch_padded = False):
+                 last_batch_padded = False,
+                 resume_size=-1):
         if not isinstance(pipelines, list):
             pipelines = [pipelines]
         self._num_gpus = len(pipelines)
@@ -135,6 +136,10 @@ class DALIGenericIterator(object):
         self._dynamic_shape = dynamic_shape
         self._fill_last_batch = fill_last_batch
         self._last_batch_padded = last_batch_padded
+        self._resume_size = resume_size
+        if self._resume_size >= 0:
+            self._orig_size = self._size
+            self._size = self._resume_size
         #print("PIPELINE - Num gpu={}, size={}, batch={}".format(self._num_gpus, self._size, self.batch_size))
         assert self._size != 0, "Size cannot be 0"
         assert self._size > 0 or (self._size < 0 and len(pipelines) == 1), "Negative size is supported only for a single pipeline"
@@ -170,6 +175,7 @@ class DALIGenericIterator(object):
         if self._counter >= self._size and self._size > 0:
             if self._auto_reset:
                 self.reset()
+            #print("Raising STOP ITER at {}".format(self._counter))
             raise StopIteration
         # Gather outputs
         outputs = []
@@ -270,17 +276,24 @@ class DALIGenericIterator(object):
         and will ignore such request.
         """
         if self._counter >= self._size or self._size < 0:
+            #print("RESET DONE: counter={}, size={}".format(self._counter, self._size))
             if self._fill_last_batch and not self._last_batch_padded:
                 self._counter = self._counter % self._size
             else:
                 self._counter = 0
+            if self._resume_size >= 0: 
+                if self._size != self._orig_size:
+                    print("Size reset from {} to {}".format(self._size, self._orig_size))
+                    self._size = self._orig_size
             for p in self._pipes:
                 p.reset()
+                #print("AFTER RESET DONE: counter={}, size={}".format(self._counter, self._size))
                 if p.empty():
                     with p._check_api_type_scope(types.PipelineAPIType.ITERATOR):
                         p.schedule_run()
         else:
-            logging.warning("DALI iterator does not support resetting while epoch is not finished. Ignoring...")
+            print("CANT RESET: counter={}, size={}".format(self._counter, self._size))
+            logging.warning("DALI iterator does not support resetting while epoch is not finished. Ignoring... ")
 
 class DALIClassificationIterator(DALIGenericIterator):
     """
@@ -354,12 +367,14 @@ class DALIClassificationIterator(DALIGenericIterator):
                  auto_reset=False,
                  fill_last_batch=True,
                  dynamic_shape=False,
-                 last_batch_padded=False):
+                 last_batch_padded=False,
+                 resume_size=-1):
         super(DALIClassificationIterator, self).__init__(pipelines, ["data", "label"],
                                                          size, auto_reset = auto_reset,
                                                          fill_last_batch = fill_last_batch,
                                                          dynamic_shape = dynamic_shape,
-                                                         last_batch_padded = last_batch_padded)
+                                                         last_batch_padded = last_batch_padded,
+                                                         resume_size = resume_size)
 
 
 class TorchPythonFunction(ops.PythonFunctionBase):

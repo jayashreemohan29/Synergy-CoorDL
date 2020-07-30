@@ -154,6 +154,18 @@ class DLL_PUBLIC OperatorBase {
     return -1;
   }
 
+  /**
+   * @brief For reader Ops, returns the shuffle order of the dataset
+   * For all other Ops, returns -1
+   */
+  DLL_PUBLIC virtual std::vector<std::pair<string, int>> index_list() const {
+    std::vector<std::pair<string, int>> vect;
+    string none("NONE");
+    vect.push_back(std::make_pair(none, -1));
+    return vect;
+  }
+
+
   template <typename Workspace>
   TensorLayout InputLayout(const Workspace &ws, int index) const {
     return GetInputLayout(ws, spec_.GetSchema(), index);

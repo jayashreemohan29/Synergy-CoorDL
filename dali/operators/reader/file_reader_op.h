@@ -33,6 +33,11 @@ class FileReader : public DataReader<CPUBackend, ImageLabelWrapper> {
                                      shuffle_after_epoch);
   }
 
+  
+  //int GetIndexList(){
+  //  return 0;
+  //}
+
   void RunImpl(SampleWorkspace &ws) override {
     const int idx = ws.data_idx();
     //std::cout << __FILE__ << " : GETTING SAMPLE IDX : " << idx << std::endl;
