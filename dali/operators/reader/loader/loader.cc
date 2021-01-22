@@ -34,6 +34,8 @@ this parameter is ignored.)code", 1024)
       R"code(Resume with old cache.)code", false)
   .AddOptionalArg("debug",
       R"code(Print debug stmts)code", false)
+  .AddOptionalArg("synergy_det",
+      R"code(Deterministic shuffle orders)code", false)
   .AddOptionalArg("shard_id",
       R"code(Id of the part to read.)code", 0)
   .AddOptionalArg("resume_index",

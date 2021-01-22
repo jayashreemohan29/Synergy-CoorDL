@@ -217,7 +217,9 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
 
     //if (current_epoch_ == 0)
     //  image_label_pairs_orig_ = image_label_pairs_;
-    image_label_pairs_orig_ = image_label_pairs_;
+    if (synergy_det_)
+        image_label_pairs_orig_ = image_label_pairs_;
+
     Reset(true);
   }
 
@@ -255,7 +257,9 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
         outfile << "Shuffling with seed = " << shuffle_seed_ << " + " << current_epoch_ << std::endl;
       
       std::mt19937 g(kDaliDataloaderSeed + shuffle_seed_ + current_epoch_);
-      image_label_pairs_ = image_label_pairs_orig_;
+      if (synergy_det_)
+          image_label_pairs_ = image_label_pairs_orig_;
+
       std::shuffle(image_label_pairs_.begin(), image_label_pairs_.end(), g);
     }
     // If the epoch count is 1 here, it means we have completed
@@ -390,6 +394,7 @@ class FileLoader : public Loader<CPUBackend, ImageLabelWrapper> {
   using Loader<CPUBackend, ImageLabelWrapper>::node_id_;
   using Loader<CPUBackend, ImageLabelWrapper>::resume_;
   using Loader<CPUBackend, ImageLabelWrapper>::debug_;
+  using Loader<CPUBackend, ImageLabelWrapper>::synergy_det_;
   //using Loader<CPUBackend, ImageLabelWrapper>::node_port_list_;
   using Loader<CPUBackend, ImageLabelWrapper>::seed_;
   using Loader<CPUBackend, ImageLabelWrapper>::outfile;

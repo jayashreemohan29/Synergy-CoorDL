@@ -85,6 +85,7 @@ class Loader {
       node_id_(options.GetArgument<int>("node_id")),
       resume_(options.GetArgument<bool>("resume")),
       debug_(options.GetArgument<bool>("debug")),
+      synergy_det_(options.GetArgument<bool>("synergy_det")),
       //node_port_list_(options.GetRepeatedArgument<int>("node_port_list")),
       copy_read_data_(false),
       read_ahead_(options.GetArgument<bool>("read_ahead")),
@@ -386,6 +387,7 @@ class Loader {
   const int node_id_;
   const bool resume_;
   const bool debug_;
+  const bool synergy_det_;
   //vector<int> node_port_list_;
   std::mutex net_mutex_;
 
